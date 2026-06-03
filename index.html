@@ -492,7 +492,19 @@ function showToast(msg,type){const el=document.getElementById('toast');el.textCo
 // BOOT
 window.addEventListener('load',()=>{
   const token=localStorage.getItem('nutsa_stock_token');
-  if(token){CONFIG.token=token;document.getElementById('login-screen').style.display='none';const app=document.getElementById('app-screen');app.style.display='flex';app.style.flexDirection='column';loadStock();}
+  if(token){
+    CONFIG.token=token;
+    gasGet({action:'get_stock'}).then(res=>{
+      if(res.ok){
+        document.getElementById('login-screen').style.display='none';
+        const app=document.getElementById('app-screen');
+        app.style.display='flex';app.style.flexDirection='column';
+        stockData=res.products||[];renderStock();
+      } else {
+        localStorage.removeItem('nutsa_stock_token');CONFIG.token=null;
+      }
+    }).catch(()=>{localStorage.removeItem('nutsa_stock_token');CONFIG.token=null;});
+  }
 });
 </script>
 </body>
