@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nutsa — Stock Produits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Fraunces:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBFAF7;--paper-warm:#F5F1E8;--ink:#1A1A1A;--ink-soft:#5A5A5A;--ink-muted:#9A9A9A;
+  --rule:#E8E4DC;--rule-soft:#F0EDE6;
+  --red:#B6342B;--red-tint:rgba(182,52,43,.1);
+  --green:#4F6B3A;--green-mid:#7E9B5C;--green-tint:rgba(79,107,58,.12);
+  --gold:#C4A04A;--gold-deep:#8A6D1F;--gold-tint:rgba(196,160,74,.14);
+  --orange:#C97B4F;--orange-tint:rgba(201,123,79,.14);
+  --display:"Fraunces",Georgia,serif;--body:"Manrope",system-ui,sans-serif;
+  --arabic:"Cairo",sans-serif;--mono:"DM Mono",monospace;
+  --radius:14px;--shadow:0 2px 12px rgba(26,26,26,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);-webkit-font-smoothing:antialiased}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;z-index:100;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center}
+#login-screen::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(255,255,255,.04) 1px,transparent 0);background-size:28px 28px;pointer-events:none}
+.login-brand{text-align:center;margin-bottom:40px;position:relative;z-index:1}
+.login-brand .logo{font-family:var(--display);font-weight:300;font-size:48px;color:#fff;letter-spacing:-.03em}
+.login-brand .logo em{font-style:italic;color:var(--red);font-weight:400}
+.login-brand .sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:10px;font-weight:600}
+.login-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:36px 32px;width:340px;position:relative;z-index:1}
+.worker-select{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:28px}
+.worker-btn{padding:14px 8px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.7);font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;text-align:center}
+.worker-btn.active{border-color:var(--red);background:rgba(182,52,43,.2);color:#fff}
+.pin-label{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:600;margin-bottom:12px;text-align:center}
+.pin-display{display:flex;justify-content:center;gap:12px;margin-bottom:24px;height:14px;align-items:center}
+.pin-dot{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.3);transition:all .15s}
+.pin-dot.filled{background:#fff;border-color:#fff;transform:scale(1.1)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{padding:16px 8px;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-family:var(--mono);font-size:20px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center;user-select:none}
+.pin-key:active{transform:scale(.94);background:rgba(255,255,255,.2)}
+.pin-key.backspace{font-size:16px;color:rgba(255,255,255,.5)}
+.pin-key.submit{background:var(--red);border-color:var(--red);font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+.pin-key.zero{grid-column:2}
+.login-error{margin-top:18px;padding:12px 16px;background:rgba(182,52,43,.2);border:1px solid rgba(182,52,43,.4);border-radius:8px;color:#ff8a80;font-size:13px;font-weight:600;text-align:center;display:none}
+.login-error.show{display:block}
+
+/* APP */
+#app-screen{display:none;flex-direction:column;min-height:100vh}
+.app-header{background:var(--ink);color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;flex-shrink:0}
+.header-brand{font-family:var(--display);font-weight:300;font-size:22px;letter-spacing:-.02em}
+.header-brand em{font-style:italic;color:var(--red)}
+.header-right{display:flex;align-items:center;gap:12px}
+.worker-chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+.logout-btn{background:none;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:5px 12px;color:rgba(255,255,255,.5);font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.logout-btn:hover{border-color:rgba(255,255,255,.5);color:#fff}
+
+/* Alerts bar */
+.alerts-bar{background:var(--red-tint);border-bottom:2px solid var(--red);padding:12px 24px;display:none;align-items:center;gap:12px;flex-wrap:wrap}
+.alerts-bar.show{display:flex}
+.alert-badge{background:var(--red);color:#fff;border-radius:999px;padding:3px 10px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.alert-items{font-size:13px;font-weight:600;color:var(--red);flex:1}
+
+/* Tabs */
+.tabs{background:#fff;border-bottom:1px solid var(--rule);padding:0 24px;display:flex;gap:0}
+.tab-btn{padding:14px 20px;border:none;border-bottom:2px solid transparent;background:none;font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);cursor:pointer;transition:all .2s;margin-bottom:-1px}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--ink)}
+
+/* Main content */
+.main-content{padding:24px;max-width:1200px;margin:0 auto;width:100%}
+
+/* Summary strip */
+.summary-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.summary-card{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);padding:18px 20px}
+.summary-card .s-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted);font-weight:700;margin-bottom:8px}
+.summary-card .s-val{font-family:var(--display);font-weight:500;font-size:28px;letter-spacing:-.02em;color:var(--ink)}
+.summary-card .s-val.red{color:var(--red)}
+.summary-card .s-val.green{color:var(--green)}
+.summary-card .s-val.gold{color:var(--gold-deep)}
+
+/* Product cards */
+.products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.product-card{background:#fff;border:1.5px solid var(--rule);border-radius:var(--radius);padding:22px;transition:all .2s}
+.product-card.low-stock{border-color:rgba(182,52,43,.4);background:rgba(182,52,43,.02)}
+.product-card.out-stock{border-color:var(--red);background:var(--red-tint)}
+.product-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.product-name{font-weight:700;font-size:15px;color:var(--ink);line-height:1.3;flex:1;margin-right:12px}
+.stock-badge{padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
+.stock-badge.ok{background:var(--green-tint);color:var(--green)}
+.stock-badge.low{background:var(--gold-tint);color:var(--gold-deep)}
+.stock-badge.out{background:var(--red-tint);color:var(--red)}
+.stock-display{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.stock-number{font-family:var(--display);font-weight:500;font-size:48px;letter-spacing:-.03em;color:var(--ink);line-height:1}
+.stock-number.low{color:var(--gold-deep)}
+.stock-number.out{color:var(--red)}
+.stock-unit{font-size:13px;color:var(--ink-muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-top:8px}
+.stock-bar-wrap{height:6px;background:var(--rule-soft);border-radius:999px;overflow:hidden;margin-bottom:16px}
+.stock-bar{height:100%;border-radius:999px;transition:width .8s ease}
+.stock-bar.ok{background:linear-gradient(90deg,var(--green),var(--green-mid))}
+.stock-bar.low{background:linear-gradient(90deg,var(--gold-deep),var(--gold))}
+.stock-bar.out{background:var(--red)}
+.card-actions{display:flex;gap:8px;align-items:center}
+.qty-btn{width:36px;height:36px;border-radius:8px;border:1.5px solid var(--rule);background:#fff;font-size:20px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:var(--ink);flex-shrink:0}
+.qty-btn:hover{border-color:var(--ink);background:var(--paper-warm)}
+.qty-btn.minus:hover{border-color:var(--red);color:var(--red)}
+.qty-btn.plus:hover{border-color:var(--green);color:var(--green)}
+.qty-input{flex:1;padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-family:var(--mono);font-size:16px;font-weight:500;text-align:center;color:var(--ink);background:#fff;outline:none;transition:border-color .2s}
+.qty-input:focus{border-color:var(--ink)}
+.restock-btn{padding:9px 16px;border-radius:8px;border:none;background:var(--green);color:#fff;font-family:var(--body);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s;white-space:nowrap}
+.restock-btn:hover{background:var(--green-mid)}
+.restock-btn:disabled{opacity:.5;cursor:not-allowed}
+.last-updated{font-size:11px;color:var(--ink-muted);margin-top:10px;letter-spacing:.04em}
+
+/* History log */
+.history-panel{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden}
+.history-head{padding:20px 24px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+.history-head h3{font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:-.01em;margin:0}
+.history-head h3 em{font-style:italic;color:var(--red)}
+.history-table{width:100%;border-collapse:collapse}
+.history-table th{text-align:left;padding:10px 24px;background:var(--paper-warm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:700;border-bottom:1px solid var(--rule)}
+.history-table td{padding:14px 24px;border-top:1px solid var(--rule-soft);font-size:13px}
+.history-table tbody tr:hover{background:var(--paper-warm)}
+.change-positive{color:var(--green);font-weight:700}
+.change-negative{color:var(--red);font-weight:700}
+
+/* Recipe editor */
+.recipe-panel{background:#fff;border:1px solid var(--rule);border-radius:var(--radius);padding:28px;margin-bottom:28px}
+.recipe-panel h3{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 6px}
+.recipe-panel h3 em{font-style:italic;color:var(--red)}
+.recipe-panel .sub{font-size:12px;color:var(--ink-muted);margin-bottom:20px}
+.recipe-row{display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:center;margin-bottom:10px}
+.recipe-label{font-size:13px;font-weight:600;color:var(--ink)}
+.recipe-input{padding:9px 12px;border:1.5px solid var(--rule);border-radius:8px;font-family:var(--mono);font-size:14px;color:var(--ink);background:#fff;outline:none;width:100%}
+.recipe-input:focus{border-color:var(--ink)}
+.recipe-unit{font-size:12px;color:var(--ink-muted);font-weight:600;white-space:nowrap}
+.save-recipe-btn{padding:10px 20px;border-radius:8px;border:none;background:var(--ink);color:#fff;font-family:var(--body);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin-top:12px}
+.save-recipe-btn:hover{background:var(--red)}
+
+/* Toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:300;background:var(--ink);color:#fff;padding:12px 24px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.06em;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+/* Loading */
+.loading-state{text-align:center;padding:60px;color:var(--ink-muted);font-size:14px;font-weight:600}
+.spinner{display:inline-block;width:28px;height:28px;border:2.5px solid var(--rule);border-top-color:var(--ink);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:680px){
+  .summary-strip{grid-template-columns:repeat(2,1fr)}
+  .products-grid{grid-template-columns:1fr}
+  .recipe-row{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-brand">
+    <div class="logo">Nu<em>t</em>sa</div>
+    <div class="sub">Stock Produits · Gestion des stocks</div>
+  </div>
+  <div class="login-box">
+    <div class="worker-select">
+      <button class="worker-btn active" data-worker="3">Responsable Stock<br><small style="font-size:10px;opacity:.6;font-weight:500">Worker 3</small></button>
+    </div>
+    <div class="pin-label">Code PIN</div>
+    <div class="pin-display">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key backspace" onclick="pinBackspace()">⌫</button>
+      <button class="pin-key zero" onclick="pinKey('0')">0</button>
+      <button class="pin-key submit" onclick="submitPin()">OK</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="app-header">
+    <div class="header-brand">Nu<em>t</em>sa <span style="font-size:13px;opacity:.5;font-weight:400;letter-spacing:.1em">· STOCK</span></div>
+    <div class="header-right">
+      <div class="worker-chip">Responsable Stock</div>
+      <button class="logout-btn" onclick="logout()">Déconnexion</button>
+    </div>
+  </div>
+
+  <div class="alerts-bar" id="alerts-bar">
+    <span class="alert-badge">⚠ Stock bas</span>
+    <span class="alert-items" id="alert-items"></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('stock')" id="tab-stock">📦 Stock actuel</button>
+    <button class="tab-btn" onclick="showTab('history')" id="tab-history">📋 Historique</button>
+    <button class="tab-btn" onclick="showTab('recipe')" id="tab-recipe">⚗️ Recettes</button>
+  </div>
+
+  <div class="main-content">
+
+    <!-- STOCK TAB -->
+    <div id="tab-content-stock">
+      <div class="summary-strip">
+        <div class="summary-card">
+          <div class="s-label">Total produits</div>
+          <div class="s-val" id="sum-total">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Stock OK</div>
+          <div class="s-val green" id="sum-ok">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Stock bas</div>
+          <div class="s-val gold" id="sum-low">—</div>
+        </div>
+        <div class="summary-card">
+          <div class="s-label">Épuisé</div>
+          <div class="s-val red" id="sum-out">—</div>
+        </div>
+      </div>
+      <div class="products-grid" id="products-grid">
+        <div class="loading-state"><div class="spinner"></div><br>Chargement…</div>
+      </div>
+    </div>
+
+    <!-- HISTORY TAB -->
+    <div id="tab-content-history" style="display:none">
+      <div class="history-panel">
+        <div class="history-head">
+          <h3>Historique des <em>mouvements</em></h3>
+          <button class="restock-btn" onclick="loadHistory()" style="background:var(--ink)">↻ Actualiser</button>
+        </div>
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Produit</th>
+              <th>Mouvement</th>
+              <th>Motif</th>
+              <th>Stock après</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RECIPE TAB -->
+    <div id="tab-content-recipe" style="display:none">
+      <div class="recipe-panel">
+        <h3>Recettes <em>produits</em></h3>
+        <div class="sub">Définissez quelle quantité de matières premières est utilisée par unité produite. Sera utilisé pour la déduction automatique du stock matières.</div>
+        <div id="recipe-content">
+          <div class="loading-state"><div class="spinner"></div><br>Chargement…</div>
+        </div>
+        <button class="save-recipe-btn" onclick="saveRecipes()">💾 Enregistrer les recettes</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CONFIG = {
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbxc8Bxw0eFXX595oSEB02OhPaLRSZAHQ7DUC398bfZKwWm82Tlx5dFqGTi2G-33_zt_/exec',
+  LOW_STOCK_THRESHOLD: 20,
+  WORKER: 3,
+  PIN: '3947'
+};
+
+// AUTH
+let pinBuffer = '', authed = false;
+function pinKey(k){if(pinBuffer.length>=4)return;pinBuffer+=k;updateDots();if(pinBuffer.length===4)setTimeout(submitPin,150);}
+function pinBackspace(){pinBuffer=pinBuffer.slice(0,-1);updateDots();}
+function updateDots(){for(let i=0;i<4;i++)document.getElementById('dot-'+i).classList.toggle('filled',i<pinBuffer.length);}
+function clearPin(){pinBuffer='';updateDots();document.getElementById('login-error').classList.remove('show');}
+
+async function submitPin(){
+  if(pinBuffer.length!==4){showLoginError('Entrez 4 chiffres.');return;}
+  try{
+    const res=await gasGet({action:'worker_login',worker:CONFIG.WORKER,pin:pinBuffer});
+    if(res.ok){
+      authed=true;
+      localStorage.setItem('nutsa_stock_token',res.token);
+      CONFIG.token=res.token;
+      document.getElementById('login-screen').style.display='none';
+      const app=document.getElementById('app-screen');app.style.display='flex';app.style.flexDirection='column';
+      loadStock();
+    } else {showLoginError('PIN incorrect.');clearPin();}
+  }catch(e){showLoginError('Erreur connexion.');clearPin();}
+}
+
+function showLoginError(msg){
+  const el=document.getElementById('login-error');el.textContent=msg;el.classList.add('show');
+  document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='var(--red)';d.style.borderColor='var(--red)';});
+  setTimeout(()=>document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='';d.style.borderColor='';}),600);
+}
+
+function logout(){
+  localStorage.removeItem('nutsa_stock_token');
+  CONFIG.token=null;authed=false;
+  document.getElementById('app-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  clearPin();
+}
+
+// GAS
+async function gasGet(p){const url=new URL(CONFIG.GAS_URL);Object.keys(p).forEach(k=>url.searchParams.set(k,p[k]));if(CONFIG.token)url.searchParams.set('wtoken',CONFIG.token);const r=await fetch(url.toString(),{redirect:'follow'});return r.json();}
+async function gasPost(b){if(CONFIG.token)b.wtoken=CONFIG.token;const r=await fetch(CONFIG.GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b),redirect:'follow'});return r.json();}
+
+// TABS
+function showTab(t){
+  ['stock','history','recipe'].forEach(id=>{
+    document.getElementById('tab-content-'+id).style.display=id===t?'block':'none';
+    document.getElementById('tab-'+id).classList.toggle('active',id===t);
+  });
+  if(t==='history')loadHistory();
+  if(t==='recipe')loadRecipes();
+}
+
+// STOCK
+let stockData=[];
+async function loadStock(){
+  document.getElementById('products-grid').innerHTML='<div class="loading-state"><div class="spinner"></div><br>Chargement…</div>';
+  try{
+    const res=await gasGet({action:'get_stock'});
+    if(res.ok){stockData=res.products||[];renderStock();}
+    else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+function renderStock(){
+  const low=stockData.filter(p=>p.qty>0&&p.qty<CONFIG.LOW_STOCK_THRESHOLD);
+  const out=stockData.filter(p=>p.qty<=0);
+  const ok=stockData.filter(p=>p.qty>=CONFIG.LOW_STOCK_THRESHOLD);
+
+  document.getElementById('sum-total').textContent=stockData.length;
+  document.getElementById('sum-ok').textContent=ok.length;
+  document.getElementById('sum-low').textContent=low.length;
+  document.getElementById('sum-out').textContent=out.length;
+
+  const alertBar=document.getElementById('alerts-bar');
+  const alertItems=[...out.map(p=>p.name+' (épuisé)'),...low.map(p=>p.name+' ('+p.qty+' restants)')];
+  if(alertItems.length){alertBar.classList.add('show');document.getElementById('alert-items').textContent=alertItems.join(' · ');}
+  else alertBar.classList.remove('show');
+
+  const maxQty=Math.max(...stockData.map(p=>p.qty),CONFIG.LOW_STOCK_THRESHOLD*3);
+  document.getElementById('products-grid').innerHTML=stockData.map(p=>{
+    const level=p.qty<=0?'out':p.qty<CONFIG.LOW_STOCK_THRESHOLD?'low':'ok';
+    const pct=Math.min((p.qty/maxQty)*100,100);
+    const labels={ok:'En stock',low:'Stock bas',out:'Épuisé'};
+    return `<div class="product-card ${level}-stock" id="card-${p.id}">
+      <div class="product-card-head">
+        <div class="product-name">${p.name}</div>
+        <span class="stock-badge ${level}">${labels[level]}</span>
+      </div>
+      <div class="stock-display">
+        <div class="stock-number ${level}">${p.qty}</div>
+        <div class="stock-unit">unités</div>
+      </div>
+      <div class="stock-bar-wrap"><div class="stock-bar ${level}" style="width:${pct}%"></div></div>
+      <div class="card-actions">
+        <button class="qty-btn minus" onclick="adjustQty('${p.id}',-1)">−</button>
+        <input type="number" class="qty-input" id="qty-${p.id}" value="1" min="1" max="9999">
+        <button class="qty-btn plus" onclick="adjustQty('${p.id}',1)">+</button>
+        <button class="restock-btn" onclick="restock('${p.id}')">+ Réappro</button>
+      </div>
+      <div class="last-updated">Dernière mise à jour: ${p.updated_at||'—'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function adjustQty(productId,dir){
+  const input=document.getElementById('qty-'+productId);
+  const qty=parseInt(input.value)||1;
+  const product=stockData.find(p=>p.id===productId);if(!product)return;
+  const newQty=Math.max(0,product.qty+(dir*qty));
+  const reason=dir>0?'Réapprovisionnement manuel':'Correction manuelle';
+  await updateStock(productId,newQty,reason);
+}
+
+async function restock(productId){
+  const input=document.getElementById('qty-'+productId);
+  const qty=parseInt(input.value)||1;
+  const product=stockData.find(p=>p.id===productId);if(!product)return;
+  const newQty=product.qty+qty;
+  await updateStock(productId,newQty,'Réapprovisionnement');
+}
+
+async function updateStock(productId,newQty,reason){
+  showToast('Mise à jour…');
+  try{
+    const res=await gasPost({action:'update_stock',product_id:productId,qty:newQty,reason:reason,worker:CONFIG.WORKER});
+    if(res.ok){
+      const p=stockData.find(p=>p.id===productId);
+      if(p)p.qty=newQty;
+      renderStock();
+      showToast('Stock mis à jour ✓','success');
+    }else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+// HISTORY
+async function loadHistory(){
+  document.getElementById('history-body').innerHTML='<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Chargement…</td></tr>';
+  try{
+    const res=await gasGet({action:'get_stock_history'});
+    if(res.ok){
+      const rows=res.history||[];
+      document.getElementById('history-body').innerHTML=rows.length?rows.map(r=>`
+        <tr>
+          <td style="color:var(--ink-muted);font-size:12px">${r.date||'—'}</td>
+          <td style="font-weight:600">${r.product||'—'}</td>
+          <td class="${r.change>0?'change-positive':'change-negative'}">${r.change>0?'+':''}${r.change}</td>
+          <td style="color:var(--ink-soft)">${r.reason||'—'}</td>
+          <td style="font-family:var(--mono);font-weight:500">${r.after}</td>
+        </tr>`).join(''):'<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--ink-muted)">Aucun mouvement enregistré.</td></tr>';
+    }
+  }catch(e){showToast('Erreur chargement historique','error');}
+}
+
+// RECIPES
+let recipesData={};
+async function loadRecipes(){
+  document.getElementById('recipe-content').innerHTML='<div class="loading-state"><div class="spinner"></div><br>Chargement…</div>';
+  try{
+    const [stockRes,matsRes,recipesRes]=await Promise.all([
+      gasGet({action:'get_stock'}),
+      gasGet({action:'get_materials'}),
+      gasGet({action:'get_recipes'})
+    ]);
+    const products=stockRes.products||[];
+    const materials=matsRes.materials||[];
+    recipesData=recipesRes.recipes||{};
+
+    document.getElementById('recipe-content').innerHTML=products.map(p=>`
+      <div style="margin-bottom:24px;padding:20px;background:var(--paper-warm);border-radius:10px">
+        <div style="font-weight:700;font-size:14px;margin-bottom:14px;color:var(--ink)">📦 ${p.name}</div>
+        ${materials.map(m=>{
+          const val=(recipesData[p.id]&&recipesData[p.id][m.id])||0;
+          return `<div class="recipe-row">
+            <div class="recipe-label">${m.name}</div>
+            <input type="number" class="recipe-input" id="recipe-${p.id}-${m.id}" value="${val}" min="0" step="0.1">
+            <span class="recipe-unit">${m.unit} / unité</span>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+  }catch(e){showToast('Erreur chargement recettes','error');}
+}
+
+async function saveRecipes(){
+  const recipes={};
+  document.querySelectorAll('.recipe-input').forEach(input=>{
+    const[,productId,matId]=input.id.split('-');
+    if(!recipes[productId])recipes[productId]={};
+    recipes[productId][matId]=parseFloat(input.value)||0;
+  });
+  showToast('Enregistrement…');
+  try{
+    const res=await gasPost({action:'save_recipes',recipes:JSON.stringify(recipes)});
+    if(res.ok)showToast('Recettes enregistrées ✓','success');
+    else showToast('Erreur: '+(res.error||'?'),'error');
+  }catch(e){showToast('Erreur réseau','error');}
+}
+
+// TOAST
+let toastT;
+function showToast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='toast show'+(type?' '+type:'');clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800);}
+
+// BOOT
+window.addEventListener('load',()=>{
+  const token=localStorage.getItem('nutsa_stock_token');
+  if(token){CONFIG.token=token;document.getElementById('login-screen').style.display='none';const app=document.getElementById('app-screen');app.style.display='flex';app.style.flexDirection='column';loadStock();}
+});
+</script>
+</body>
+</html>
