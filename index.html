@@ -289,7 +289,8 @@ const CONFIG = {
   WORKER: 3,
   PIN: '3947'
 };
-
+let lastHash='';
+let pollInterval=null;
 // AUTH
 let pinBuffer = '', authed = false;
 function pinKey(k){if(pinBuffer.length>=4)return;pinBuffer+=k;updateDots();if(pinBuffer.length===4)setTimeout(submitPin,150);}
@@ -308,7 +309,9 @@ async function submitPin(){
       document.getElementById('login-screen').style.display='none';
       const app=document.getElementById('app-screen');app.style.display='flex';app.style.flexDirection='column';
       loadStock();
-    } else {showLoginError('PIN incorrect.');clearPin();}
+      startPolling();
+    }
+    else {showLoginError('PIN incorrect.');clearPin();}
   }catch(e){showLoginError('Erreur connexion.');clearPin();}
 }
 
@@ -317,8 +320,8 @@ function showLoginError(msg){
   document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='var(--red)';d.style.borderColor='var(--red)';});
   setTimeout(()=>document.querySelectorAll('.pin-dot').forEach(d=>{d.style.background='';d.style.borderColor='';}),600);
 }
-
 function logout(){
+  stopPolling();
   localStorage.removeItem('nutsa_stock_token');
   CONFIG.token=null;authed=false;
   document.getElementById('app-screen').style.display='none';
@@ -329,7 +332,9 @@ function logout(){
 // GAS
 async function gasGet(p){const url=new URL(CONFIG.GAS_URL);Object.keys(p).forEach(k=>url.searchParams.set(k,p[k]));if(CONFIG.token)url.searchParams.set('wtoken',CONFIG.token);const r=await fetch(url.toString(),{redirect:'follow'});return r.json();}
 async function gasPost(b){if(CONFIG.token)b.wtoken=CONFIG.token;const r=await fetch(CONFIG.GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b),redirect:'follow'});return r.json();}
-
+async function smartPoll(){try{const res=await gasGet({action:'get_stock'});if(!res.ok)return;const newHash=JSON.stringify(res.products);if(newHash!==lastHash){lastHash=newHash;stockData=res.products||[];renderStock();showToast('Stock mis à jour ✓','success');}}catch(e){console.warn('Poll failed:',e);}}
+function startPolling(){stopPolling();pollInterval=setInterval(smartPoll,60000);}
+function stopPolling(){if(pollInterval){clearInterval(pollInterval);pollInterval=null;}}
 // TABS
 function showTab(t){
   ['stock','history','recipe'].forEach(id=>{
@@ -500,6 +505,7 @@ window.addEventListener('load',()=>{
         const app=document.getElementById('app-screen');
         app.style.display='flex';app.style.flexDirection='column';
         stockData=res.products||[];renderStock();
+        startPolling();
       } else {
         localStorage.removeItem('nutsa_stock_token');CONFIG.token=null;
       }
